@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Voice to Claude - Dictée vocale
-Appuie sur F9 pour démarrer/arrêter l'enregistrement
+Voice to Claude - Voice Dictation
+Press F9 to start/stop recording
 """
 import sys
 import os
@@ -22,25 +22,25 @@ print("=" * 40)
 # CONFIGURATION
 # ======================
 
-# IMPORTANT: faster-whisper nécessite 16kHz mono float32
-FS = 16000  # Sample rate obligatoire: 16kHz
-CHUNK_DURATION = 1  # Secondes par chunk
-SILENCE_THRESHOLD = 0.005  # Seuil de silence plus bas pour éviter de couper la parole
+# IMPORTANT: faster-whisper requires 16kHz mono float32
+FS = 16000  # Sample rate required: 16kHz
+CHUNK_DURATION = 1  # Seconds per chunk
+SILENCE_THRESHOLD = 0.005  # Lower silence threshold to capture soft speech
 
-# Vérifier le micro
+# Check microphone
 try:
     device_info = sd.query_devices(kind='input')
-    print(f"🎙️ Micro: {device_info['name']}")
+    print(f"🎙️ Microphone: {device_info['name']}")
 except Exception as e:
-    print(f"❌ Erreur périphérique: {e}")
+    print(f"❌ Device error: {e}")
 
-print(f"🎙️ Fréquence: {FS} Hz (obligatoire pour Whisper)")
-print("⌨️ F9 = Start/Stop dictée")
+print(f"🎙️ Sample rate: {FS} Hz (required for Whisper)")
+print("⌨️ F9 = Start/Stop dictation")
 
 # ======================
-# CHARGER LE MODÈLE
+# LOAD MODEL
 # ======================
-print("\n🔄 Chargement du modèle...")
+print("\n🔄 Loading model...")
 
 import torch
 if torch.cuda.is_available():
@@ -52,65 +52,65 @@ else:
     compute_type = "int8"
     print("⚠️ CPU")
 
-# Charger le modèle local (pas de download HF)
+# Load local model (no HF download)
 model_path = os.path.join(os.path.dirname(__file__), "models", "faster-whisper-large-v3")
 model = WhisperModel(model_path, device=device, compute_type=compute_type)
-print("✅ Modèle chargé")
+print("✅ Model loaded")
 
 # ======================
-# VARIABLES D'ÉTAT
+# STATE VARIABLES
 # ======================
 is_recording = False
 audio_buffer = []
 stop_flag = threading.Event()
 
 def record_audio():
-    """Enregistre l'audio en continu (16kHz mono)"""
+    """Record audio continuously (16kHz mono)"""
     global audio_buffer, is_recording
 
-    print("\n🎙️ Enregistrement... parle maintenant!")
-    print("⏹️ F9 pour arrêter")
+    print("\n🎙️ Recording... speak now!")
+    print("⏹️ Press F9 to stop")
 
     audio_buffer = []
     stop_flag.clear()
 
-    chunk_size = int(CHUNK_DURATION * FS)  # 3s * 16000 = 48000 samples
+    chunk_size = int(CHUNK_DURATION * FS)  # 1s * 16000 = 16000 samples
 
     while not stop_flag.is_set():
         try:
-            # Doc officielle: sd.rec() retourne (samples, channels)
-            # channels=1 pour mono, dtype=float32
+            # Official doc: sd.rec() returns (samples, channels)
+            # channels=1 for mono, dtype=float32
             chunk = sd.rec(
                 frames=chunk_size,
                 samplerate=FS,
                 channels=1,
                 dtype='float32'
             )
-            sd.wait()  # Bloquer jusqu'à fin
+            sd.wait()  # Block until done
 
-            # IMPORTANT: .squeeze() pour convertir 2D → 1D
+            # IMPORTANT: .squeeze() to convert 2D → 1D
             chunk = chunk.squeeze()
 
-            # Ajouter seulement si pas de silence (seuil plus bas)
+            # Add only if not silence (lower threshold)
             if np.max(np.abs(chunk)) > SILENCE_THRESHOLD:
                 audio_buffer.append(chunk)
                 print(f"   📊 {len(audio_buffer) * CHUNK_DURATION}s", end='\r')
 
         except Exception as e:
-            print(f"\n❌ Erreur: {e}")
+            print(f"\n❌ Error: {e}")
             break
 
-    print("\n✅ Arrêté")
+    print("\n✅ Stopped")
 
 def transcribe():
-    """Transcrit l'audio enregistré"""
+    """Transcribe recorded audio"""
     global audio_buffer
 
     if not audio_buffer:
-        print("⚠️ Pas d'audio")
+        print("⚠️ No audio")
         return
 
-    # Combiner tout l'audio
+    # Combine all audio
     audio = np.concatenate(audio_buffer)
     audio_buffer = []
 
@@ -118,23 +118,23 @@ def transcribe():
     print(f"📊 Audio: {duration:.1f}s")
 
     if duration < 0.5:
-        print("⚠️ Trop court")
+        print("⚠️ Too short")
         return
 
-    # Transcription avec VAD filter (doc officielle)
-    print("🔄 Transcription...")
+    # Transcription with VAD filter (official doc)
+    print("🔄 Transcribing...")
 
-    # Assurer que l'audio est bien 1D
+    # Ensure audio is 1D
     if audio.ndim > 1:
         audio = audio.squeeze()
 
     segments, info = model.transcribe(
         audio,
-        language="fr",
+        language="en",  # English - change to "fr" for French
         beam_size=5,
         temperature=0,
-        condition_on_previous_text=False,  # Recommandé pour faster-whisper
-        vad_filter=True,  # Active le Voice Activity Detection
+        condition_on_previous_text=False,  # Recommended for faster-whisper
+        vad_filter=True,  # Enable Voice Activity Detection
         vad_parameters=dict(
             min_speech_duration_ms=250,
             min_silence_duration_ms=500,
@@ -143,22 +143,22 @@ def transcribe():
         ),
     )
 
-    # Collecter le texte
+    # Collect text
     text = " ".join(seg.text.strip() for seg in segments)
 
     if text:
         print(f"📝: {text}")
-        print("⌨️ Écriture...")
+        print("⌨️ Typing...")
 
         time.sleep(0.3)
         pyautogui.write(text, interval=0.01)
 
-        print("✅ Terminé!")
+        print("✅ Done!")
     else:
-        print("⚠️ Pas de texte détecté")
+        print("⚠️ No text detected")
 
 def on_f9():
-    """Gestionnaire F9"""
+    """F9 handler"""
     global is_recording
 
     if not is_recording:
@@ -171,10 +171,10 @@ def on_f9():
         threading.Thread(target=transcribe, daemon=True).start()
 
 # ======================
-# BOUCLE PRINCIPALE
+# MAIN LOOP
 # ======================
 print("\n" + "=" * 40)
-print("✅ Prêt! F9 pour dicter, Ctrl+C pour quitter")
+print("✅ Ready! Press F9 to dictate, Ctrl+C to quit")
 print("=" * 40)
 
 keyboard.add_hotkey('f9', on_f9)

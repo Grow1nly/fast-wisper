@@ -1,6 +1,6 @@
-# Fast Wisper
+# Fast Whisper
 
-Voice dictation tool for French using faster-whisper with GPU acceleration.
+Voice dictation tool using faster-whisper with GPU acceleration.
 
 ## Features
 
@@ -14,8 +14,8 @@ Voice dictation tool for French using faster-whisper with GPU acceleration.
 
 ```bash
 # Clone the repo
-git clone https://github.com/Grow1nly/fast-wisper.git
-cd fast-wisper
+git clone https://github.com/Grow1nly/fast-whisper.git
+cd fast-whisper
 
 # Create conda env from environment.yml
 conda env create -f environment.yml
@@ -31,7 +31,7 @@ python voice_to_claude.py
 ```
 
 - Press **F9** to start recording
-- Speak in French
+- Speak (default: English - change `language="en"` to `"fr"` for French)
 - Press **F9** again to stop and transcribe
 - Text is automatically typed to the active window
 
