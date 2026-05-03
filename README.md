@@ -17,8 +17,8 @@ Voice dictation tool for French using faster-whisper with GPU acceleration.
 git clone https://github.com/Grow1nly/fast-wisper.git
 cd fast-wisper
 
-# Create conda env from whisper12 (or base)
-conda create -n fast-wisper --clone whisper12
+# Create conda env from environment.yml
+conda env create -f environment.yml
 
 # Activate
 conda activate fast-wisper
