@@ -17,11 +17,11 @@ Voice dictation tool for French using faster-whisper with GPU acceleration.
 git clone https://github.com/Grow1nly/fast-wisper.git
 cd fast-wisper
 
-# Install dependencies
-pip install faster-whisper sounddevice numpy pyautogui keyboard torch
+# Create conda env from whisper12 (or base)
+conda create -n fast-wisper --clone whisper12
 
-# Download the model (or use the provided one in models/)
-# The model will be loaded from models/faster-whisper-large-v3/
+# Activate
+conda activate fast-wisper
 ```
 
 ## Usage
@@ -37,9 +37,20 @@ python voice_to_claude.py
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10
 - NVIDIA GPU with CUDA (optional, falls back to CPU)
 - Microphone
+- Conda (for environment management)
+
+## Key Dependencies
+
+The environment is based on `whisper12` conda env with these key packages:
+- faster-whisper==1.2.1
+- torch==2.5.1+cu121
+- sounddevice==0.5.5
+- pyautogui==0.9.54
+- keyboard==0.13.5
+- numpy==2.2.6
 
 ## Model
 
