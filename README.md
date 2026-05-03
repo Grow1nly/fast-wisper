@@ -2,6 +2,8 @@
 
 Voice dictation tool using faster-whisper with GPU acceleration.
 
+![Demo](images/screenshot.png)
+
 ## Features
 
 - F9 hotkey to start/stop recording
