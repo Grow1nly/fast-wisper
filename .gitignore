@@ -1,0 +1,15 @@
+# Modèle Whisper (téléchargé séparément)
+models/
+
+# Fichiers temporaires
+.tmp/
+temp.wav
+*.wav
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
